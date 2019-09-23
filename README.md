@@ -3,3 +3,4 @@ Analysis code for genotype-phenotype association study, which of the part is use
 
 -----
 Created by Kicheol Kim, PhD (May 2018 updated)
+Baranzini Lab. (https://github.com/baranzini-lab), Department of Neurology, UCSF
