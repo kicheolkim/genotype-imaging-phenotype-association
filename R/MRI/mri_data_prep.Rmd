@@ -1,0 +1,88 @@
+#####  calculate slope -> test using linear mixed effect model  #####
+
+#####  MRI data preparation  #####
+setwd("C:/Users/kicheol/Desktop/Projects/Phenotype/raw.data/UCSF")
+
+### preparing MRI dataset
+```{r}
+setwd("C:/Users/kicheol/Desktop/Projects/Phenotype/raw.data/UCSF")
+EPIC_MRI_Scalars <- read_csv("C:/Users/kicheol/Desktop/Projects/Phenotype/raw.data/UCSF/EPIC_MRI_Scalars.csv")
+
+### calculate normalized volume
+EPIC_MRI_Normalized <- EPIC_MRI_Scalars[,1:6]
+EPIC_MRI_Normalized$NBV <- EPIC_MRI_Scalars$Brain_volume * EPIC_MRI_Scalars$V_scale
+EPIC_MRI_Normalized$NGMV <- EPIC_MRI_Scalars$GM_volume * EPIC_MRI_Scalars$V_scale
+EPIC_MRI_Normalized$NWMV <- EPIC_MRI_Scalars$WM_volume * EPIC_MRI_Scalars$V_scale
+EPIC_MRI_Normalized$NT2V <- EPIC_MRI_Scalars$T2_volume * EPIC_MRI_Scalars$V_scale
+EPIC_MRI_Normalized$NVCSF <- EPIC_MRI_Scalars$Ventricular_CSF_volume * EPIC_MRI_Scalars$V_scale
+EPIC_MRI_Normalized$NCGM <- EPIC_MRI_Scalars$Cortical_GM_volume * EPIC_MRI_Scalars$V_scale
+EPIC_MRI_Normalized$New_T2_count <- EPIC_MRI_Scalars$New_T2_count
+EPIC_MRI_Normalized$PBVC_since_baseline <- EPIC_MRI_Scalars$PBVC_since_baseline
+EPIC_MRI_Normalized$Gad_Lesions <- EPIC_MRI_Scalars$Gad_Lesions
+
+as.factor(EPIC_MRI_Normalized$VisitType)
+save(EPIC_MRI_Normalized, file="EPIC_MRI_Normalized.RData")
+```
+
+# check histogram for each MRI values
+```{r}
+# Volumes: Nbrain_volume,	GM_volume,	WM_volume,	T2_volume,	
+# Volumes: Ventricular_CSF_volume,	Cortical_GM_volume,	PBVC_since_baseline,	New_T2_count,	Gad_Lesions
+setwd("C:/Users/kicheol/Desktop/Projects/Phenotype/R_ImgPheno")
+vols <- c("Nbrain_volume","GM_volume","WM_volume","T2_volume","Ventricular_CSF_volume","Cortical_GM_volume","PBVC_since_baseline","New_T2_count","Gad_Lesions")
+colnames(EPIC_MRI_Scalars)
+length(unique(EPIC_MRI_Scalars$EPICID))    # total 600 patients
+
+# check number of samples and histogram
+setwd("C:/Users/kicheol/Desktop/Projects/Phenotype/R_ImgPheno/MRI/dataset_check")
+vols <- c("NBV","NGMV","NWMV","NT2V","NVCSF","NCGM","New_T2_count","PBVC_since_baseline","Gad_Lesions")
+
+No.of.Samples <- data.frame()
+for (i in 1:length(vols)){
+  vols[i]
+  tmp <- EPIC_MRI_Normalized[!is.na(EPIC_MRI_Normalized[,vols[i]]),]
+  No.of.Samples <- rbind(No.of.Samples, data.frame("VolumeMeasure"=vols[i], "Total"=length(unique(tmp$EPICID)), 
+                              "Baseline"=nrow(subset(tmp, VisitType == "Baseline")),
+                              "Year2"=nrow(subset(tmp, VisitType == "F/U Yr 2")),
+                              "Year5"=nrow(subset(tmp, VisitType == "F/U Yr 5"))))
+  png(paste0(vols[i],".png"))
+  hist(tmp[,vols[i]], breaks=100, main=paste0(vols[i]))
+  dev.off()
+  png(paste0(vols[i],"_log.png"))
+  hist(log2(tmp[,vols[i]]), breaks=100, main=paste0(vols[i]))
+  dev.off()
+}
+write.csv(No.of.Samples, "No_of_samples.csv")
+rm(tmp, No.of.Samples, i, tmp2)
+
+
+# log tramsform for NT2V and NVCSF
+EPIC_MRI_Normalized$NT2V_log <- log(EPIC_MRI_Normalized$NT2V)
+EPIC_MRI_Normalized$NVCSF_log <- log(EPIC_MRI_Normalized$NVCSF)
+
+# save normalized MRI data
+save(EPIC_MRI_Normalized, file="EPIC_MRI_Normalized.RData")
+```
+
+### preparing patients metadata
+```{r}
+EPIC_metadata <- read_csv("C:/Users/kicheol/Desktop/Projects/Phenotype/raw.data/UCSF/EPIC_MRI_metadata-baseline.csv")
+
+EPIC_metadata$Gender <- as.factor(EPIC_metadata$Gender)
+EPIC_metadata$DiseaseCourse <- as.factor(EPIC_metadata$DiseaseCourse)
+EPIC_metadata$DRBstat1 <- as.factor(EPIC_metadata$DRBstat1)
+EPIC_metadata$DRBstat2 <- as.factor(EPIC_metadata$DRBstat2)
+
+save(EPIC_metadata, file="EPIC_MRI_Metadata.RData")
+```
+
+### preparing genotype (194 SNPs)
+```{r}
+EPIC_194snp <- read_csv("C:/Users/kicheol/Desktop/Projects/Phenotype/raw.data/UCSF/EPIC_genetics_2015.csv")
+```
+
+### merge dataset
+```{r}
+
+```
+

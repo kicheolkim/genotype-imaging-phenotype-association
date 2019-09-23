@@ -1,0 +1,46 @@
+# references
+https://stats.stackexchange.com/questions/122009/extracting-slopes-for-cases-from-a-mixed-effects-model-lme4
+#
+Mixed effects models were used to characterize individual paths of change in the cognitive summary measures, including terms for age, sex, and years of education as fixed effects (Laird and Ware, 1982; Wilson et al., 2000, 2002c).... Residual, individual cognitive decline slope terms were extracted from the mixed models, after adjustment for the effects of age, sex, and education. Person-specific, adjusted residual slopes were then used as a quantitative outcome phenotype for the genetic association analyses. These estimates equate to the difference between an individual’s slope and the predicted slope of an individual of the same age, sex, and education level.
+
+De Jager, P. L., Shulman, J. M., Chibnik, L. B., Keenan, B. T., Raj, T., Wilson, R. S., et al. (2012). A genome-wide scan for common variants affecting the rate of age-related cognitive decline. Neurobiology of Aging, 33(5), 1017.e1–1017.e15.
+
+############################################################################################3
+```{r}
+# example for calculation slopes using linear mixed effect model
+library(lme4)
+attach(sleepstudy)  
+fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+
+coef(fm1)$Subject     # combination of the fixed effects and the variance components (random effects)
+coef(summary(fm1))[ , "Estimate"]     # coeffecient of fixed effect, this is the mean of all subjects.
+ranef(fm1)$Subject     # To obtain the random effects
+```
+
+###################################################################
+```{r}
+# test slope calculation for MRI dataset
+EPIC_MRI_Norm_withMeta <- merge(EPIC_MRI_Normalized, EPIC_metadata, by.x="EPICID", by.y="EPICID")
+write.csv(EPIC_MRI_Norm_withMeta, "EPIC_MRI_Norm_withMeta.csv")
+
+head(EPIC_MRI_Norm_withMeta)
+flme <- lmer(NBV ~ Time + DRBstat1 + AgeAtExam + (Time|EPICID), EPIC_MRI_Norm_withMeta)
+summary(flme)
+coef(flme)
+```
+
+```{r}
+# test correlation of slopes between linear model and linear mixed effect model
+flme_slope <- data.frame(coef(flme)$EPICID)
+flme_slope$EPICID <- row.names(flme_slope)
+
+tmp <- merge(EPIC_MRI_slope, flme_slope, by.x="EPICID", by.y="EPICID")
+tmp <- tmp[,c(1,2,3,16,17)]
+cor.test(tmp$NBV_Slop, tmp$Time)
+```
+```{r}
+ggplot(tmp, aes(method1, method2, color=NBV_n)) + geom_point()
+```
+
+
+
